@@ -8,13 +8,13 @@
 # Bitmap Display Configuration:
 # - Unit width in pixels: 4
 # - Unit height in pixels: 4
-# - Display width in pixels: 512 (update this as needed)
-# - Display height in pixels: 256 (update this as needed)
+# - Display width in pixels: 512
+# - Display height in pixels: 256
 # - Base Address for Display: 0x10008000 ($gp)
 #
 # Which milestones have been reached in this submission?
 # (See the assignment handout for descriptions of the milestones)
-# - Milestone 3
+# - Milestone 1, 2, and 3
 #
 # Which approved features have been implemented for milestone 3?
 # (See the assignment handout for the list of additional features)
@@ -29,10 +29,11 @@
 # - (insert YouTube / MyMedia / other URL here). Make sure we can view it!
 #
 # Are you OK with us sharing the video with people outside course staff?
-# - yes / no / yes, and please share this project github link as well!
+# - yes, and please share this project github link as well!
+# https://github.com/tlandart/b58-project (will unprivate after the course ends)
 #
 # Any additional information that the TA needs to know:
-# - (write here, if any)
+# - N/A
 #
 #####################################################################
 
@@ -52,9 +53,7 @@
 .eqv WIDTH_M        127
 .eqv HEIGHT_M       63
 .eqv WIDTH_4        512
-.eqv HEIGHT_4       256
 .eqv AREA         8192
-.eqv AREA_4     32768
 
 # colors
 .eqv COL_BG 0x173CCF
@@ -87,10 +86,10 @@ TimerWait:		.word 0
 # time left in seconds
 Timer:			.word 0
 # positions for the crosses flying around
-CrossX:			.word 1, WIDTH_M, 1, WIDTH_M, 1 WIDTH_M, 1
-CrossY:			.word 1, 1, 1, 1, 1, 1, 1
-CrossDir:		.word 1, -1, 1, -1, 1, -1, 1 # direction of ith cross (delta x)
-CrossWait:		.word 0, 0, 0, 0, 0, 0, 0 # frames to wait before cross spawns
+CrossX:			.word 1, WIDTH_M, 1, WIDTH_M, 1, WIDTH_M, 1, WIDTH_M, 1, WIDTH_M
+CrossY:			.word 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+CrossDir:		.word 1, -1, 1, -1, 1, -1, 1, -1, 1, -1 # direction of ith cross
+CrossWait:		.word 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 # frames to wait before cross spawns
 # positions for the annoying bat
 BatX:			.word 0
 BatY:			.word 32
@@ -394,7 +393,7 @@ IsPlayerHitByCrossLoopCheckY:
 
 IsPlayerHitByCrossLoopUpdate:
 	addi $s1, $s1, 4 # increment
-	blt $s1, 28, IsPlayerHitByCrossLoop
+	blt $s1, 40, IsPlayerHitByCrossLoop
 IsPlayerHitByCrossLoopNo: # we get here to return 0
 	li $t1, 0
 	addi $sp, $sp, -4	# push 0 on stack
@@ -1708,7 +1707,7 @@ crossresetloopparityend:
 	sw $a0, CrossWait($s1) # random wait value
 
 	addi $s1, $s1, 4 # increment
-	blt $s1, 28, crossresetloop
+	blt $s1, 40, crossresetloop
 crossresetend:
 
 	# reset bat
@@ -1744,8 +1743,8 @@ crossresetend:
 	li $t0, HEALTH_START
 	sw, $t0, Health
 
-	# reset double jump
-	li $t0, 0
+	# reset double jump (we start in the air so we have it)
+	li $t0, 1
 	sw, $t0, DoubleJump
 
 	# reset jump frame
@@ -1814,12 +1813,12 @@ bathitcheck:
 	sw $t1, ITime
 invincibilitycheck:
 
-	# if hit, wait 500 ms, take away 1 health and if health == 0, game over
+	# if hit, wait 250 ms, take away 1 health and if health == 0, game over
 	bne $t0, 1, crosshitcheck
 	
-	li $v0, 32
-	li $a0, 250
-	syscall
+	#li $v0, 32
+	#li $a0, 250
+	#syscall
 
 	# reset i-frame (become invincible)
 	li $t1, I_TIME
@@ -1943,7 +1942,7 @@ crosscheckupdate:
 crosscheckupdatedrawwait:
 
 	addi $s1, $s1, 4
-	blt $s1, 28, crosscheckloop
+	blt $s1, 40, crosscheckloop
 crosscheckend:
 
 	# update bat
@@ -2073,50 +2072,12 @@ batycheck:
 
 	jal DrawBat			# call DrawBat()
 
-	# if the player moved, erase and redraw him
-	# otherwise, skip this code
-	lw $t0, PlayerMoved
-	li $t1, 1
-	bne $t0, $t1, movecheck
-
-	# erase player
-	addi $sp, $sp, -4	# push x on stack
-	sw $s4, 0($sp)
-	addi $sp, $sp, -4	# push y on stack
-	sw $s5, 0($sp)
-	jal ErasePlayer		# call ErasePlayer(old x, old y)
-
-	# set old x and old y to x and y
-	add $s4, $s6, $zero
-	add $s5, $s7, $zero
-
-	# draw player in the new location
-	addi $sp, $sp, -4	# push x on stack
-	sw $s6, 0($sp)
-	addi $sp, $sp, -4	# push y on stack
-	sw $s7, 0($sp)
-	jal DrawPlayer		# call DrawPlayer(x,y)
-movecheck:
-
 	# draw moving platforms
 
 	# erase first one
 	li $t5, 0
 	lw $t0, MovingPlatX($t5)
 	li $t1, 15
-	li $t2, 20
-	addi $sp, $sp, -4
-	sw $t0, 0($sp)		# push x on stack
-	addi $sp, $sp, -4
-	sw $t1, 0($sp)		# push y on stack
-	addi $sp, $sp, -4
-	sw $t2, 0($sp)		# push w on stack
-	jal ErasePlatform
-
-	# erase second one
-	li $t5, 4
-	lw $t0, MovingPlatX($t5)
-	li $t1, 45
 	li $t2, 20
 	addi $sp, $sp, -4
 	sw $t0, 0($sp)		# push x on stack
@@ -2141,6 +2102,23 @@ movecheck:
 	# otherwise, save MovingPlatX = x + dx
 	addi $t0, $t0, -10
 	sw $t0, MovingPlatX($t5)
+	
+	# once the platform moves, move player if on top
+	# if playery = platformy-3 AND playerx >= platformx - w/2 AND playerx <= platformx + w/2 AND playerx + dx > 1 AND playerx + dx < WIDTH - 1
+	bne $s7, 12, plat1check
+	addi $t0, $t0, -10
+	blt $s6, $t0, plat1check
+	addi $t0, $t0, 20
+	bgt $s6, $t0, plat1check
+	add $t2, $s6, $t1
+	ble $t2, 1, plat1check
+	li $t0, WIDTH
+	addi $t0, $t0, -1
+	bge $t2, $t0, plat1check
+	# if we're here, save the player's new x (playerx += dx)
+	add $s6, $s6, $t1
+	li $t0, 1
+	sw $t0, PlayerMoved # set player to be redrawn
 	j plat1check
 plat1checkflip:
 	# if we're here, flip dx
@@ -2149,6 +2127,32 @@ plat1checkflip:
 	mflo $t2
 	sw $t2, MovingPlatDX($t5)
 plat1check:
+
+	# draw first one
+	li $t5, 0
+	lw $t0, MovingPlatX($t5)
+	li $t1, 15
+	li $t2, 20
+	addi $sp, $sp, -4
+	sw $t0, 0($sp)		# push x on stack
+	addi $sp, $sp, -4
+	sw $t1, 0($sp)		# push y on stack
+	addi $sp, $sp, -4
+	sw $t2, 0($sp)		# push w on stack
+	jal DrawPlatform
+
+	# erase second one
+	li $t5, 4
+	lw $t0, MovingPlatX($t5)
+	li $t1, 45
+	li $t2, 20
+	addi $sp, $sp, -4
+	sw $t0, 0($sp)		# push x on stack
+	addi $sp, $sp, -4
+	sw $t1, 0($sp)		# push y on stack
+	addi $sp, $sp, -4
+	sw $t2, 0($sp)		# push w on stack
+	jal ErasePlatform
 
 	# update second one
 	li $t5, 4
@@ -2165,6 +2169,23 @@ plat1check:
 	# otherwise, save MovingPlatX = x + dx
 	addi $t0, $t0, -10
 	sw $t0, MovingPlatX($t5)
+	
+	# once the platform moves, move player if on top
+	# if playery = platformy-3 AND playerx >= platformx - w/2 AND playerx <= platformx + w/2 AND playerx + dx > 1 AND playerx + dx < WIDTH - 1
+	bne $s7, 42, plat2check
+	addi $t0, $t0, -10
+	blt $s6, $t0, plat2check
+	addi $t0, $t0, 20
+	bgt $s6, $t0, plat2check
+	add $t2, $s6, $t1
+	ble $t2, 1, plat2check
+	li $t0, WIDTH
+	addi $t0, $t0, -1
+	bge $t2, $t0, plat2check
+	# if we're here, save the player's new x (playerx += dx)
+	add $s6, $s6, $t1
+	li $t0, 1
+	sw $t0, PlayerMoved # set player to be redrawn
 	j plat2check
 plat2checkflip:
 	# if we're here, flip dx
@@ -2173,19 +2194,6 @@ plat2checkflip:
 	mflo $t2
 	sw $t2, MovingPlatDX($t5)
 plat2check:
-
-	# draw first one
-	li $t5, 0
-	lw $t0, MovingPlatX($t5)
-	li $t1, 15
-	li $t2, 20
-	addi $sp, $sp, -4
-	sw $t0, 0($sp)		# push x on stack
-	addi $sp, $sp, -4
-	sw $t1, 0($sp)		# push y on stack
-	addi $sp, $sp, -4
-	sw $t2, 0($sp)		# push w on stack
-	jal DrawPlatform
 
 	# draw second one
 	li $t5, 4
@@ -2199,6 +2207,31 @@ plat2check:
 	addi $sp, $sp, -4
 	sw $t2, 0($sp)		# push w on stack
 	jal DrawPlatform
+
+	# if the player moved, erase and redraw him
+	# otherwise, skip this code
+	lw $t0, PlayerMoved
+	li $t1, 1
+	bne $t0, $t1, movecheck
+
+	# erase player
+	addi $sp, $sp, -4	# push x on stack
+	sw $s4, 0($sp)
+	addi $sp, $sp, -4	# push y on stack
+	sw $s5, 0($sp)
+	jal ErasePlayer		# call ErasePlayer(old x, old y)
+
+	# set old x and old y to x and y
+	add $s4, $s6, $zero
+	add $s5, $s7, $zero
+
+	# draw player in the new location
+	addi $sp, $sp, -4	# push x on stack
+	sw $s6, 0($sp)
+	addi $sp, $sp, -4	# push y on stack
+	sw $s7, 0($sp)
+	jal DrawPlayer		# call DrawPlayer(x,y)
+movecheck:
 
 	# draw static platforms
 	# put a platform on the first quarter
