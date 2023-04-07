@@ -54,6 +54,7 @@
 .eqv HEIGHT_M       63
 .eqv WIDTH_4        512
 .eqv AREA         8192
+.eqv AREA_4         32768
 
 # colors
 .eqv COL_BG 0x173CCF
@@ -1436,18 +1437,28 @@ DrawPlayer:
 	li $t5, COL_PLAYER3
 DrawPlayerCheck:
 
-	# row 1
+	li $t0, DISPLAY_ADDRESS
+	addi $t0, $t0, AREA_4 # the last pixel on the screen
+
+	# row 1 - only draw if the address is on the screen (only a vertical check is needed because the player vertically clips the screen but just stops horizontally)
+	ble $t3, DISPLAY_ADDRESS, DrawPlayerRow1Check
+	bge $t3, $t0, DrawPlayerRow1Check
+
 	move $t2, $t5
 	sw $t2, 0($t3)
 	addi $t3, $t3, 4
 	sw $t2, 0($t3)
 	addi $t3, $t3, 4
 	sw $t2, 0($t3)
+	addi $t3, $t3, -8
+DrawPlayerRow1Check:
 	
 	addi $t3, $t3, WIDTH_4
-	addi $t3, $t3, -8
 
-	# row 2
+	# row 2 - only draw if the address is on the screen
+	ble $t3, DISPLAY_ADDRESS, DrawPlayerRow2Check
+	bge $t3, $t0, DrawPlayerRow2Check
+
 	move $t2, $t5
 	sw $t2, 0($t3)
 	addi $t3, $t3, 4
@@ -1456,22 +1467,30 @@ DrawPlayerCheck:
 	addi $t3, $t3, 4
 	move $t2, $t5
 	sw $t2, 0($t3)
+	addi $t3, $t3, -8
+DrawPlayerRow2Check:
 	
 	addi $t3, $t3, WIDTH_4
-	addi $t3, $t3, -8
 
-	# row 3
+	# row 3 - only draw if the address is on the screen
+	ble $t3, DISPLAY_ADDRESS, DrawPlayerRow3Check
+	bge $t3, $t0, DrawPlayerRow3Check
+
 	li $t2, COL_PLAYER1
 	sw $t2, 0($t3)
 	addi $t3, $t3, 4
 	sw $t2, 0($t3)
 	addi $t3, $t3, 4
 	sw $t2, 0($t3)
+	addi $t3, $t3, -8
+DrawPlayerRow3Check:
 	
 	addi $t3, $t3, WIDTH_4
-	addi $t3, $t3, -8
 
-	# row 4
+	# row 4 - only draw if the address is on the screen
+	ble $t3, DISPLAY_ADDRESS, DrawPlayerRow4Check
+	bge $t3, $t0, DrawPlayerRow4Check
+
 	move $t2, $t5
 	sw $t2, 0($t3)
 	addi $t3, $t3, 4
@@ -1480,11 +1499,15 @@ DrawPlayerCheck:
 	addi $t3, $t3, 4
 	move $t2, $t5
 	sw $t2, 0($t3)
+	addi $t3, $t3, -8
+DrawPlayerRow4Check:
 	
 	addi $t3, $t3, WIDTH_4
-	addi $t3, $t3, -8
 
-	# row 5
+	# row 5 - only draw if the address is on the screen
+	ble $t3, DISPLAY_ADDRESS, DrawPlayerRow5Check
+	bge $t3, $t0, DrawPlayerRow5Check
+
 	move $t2, $t5
 	sw $t2, 0($t3)
 	addi $t3, $t3, 4
@@ -1493,14 +1516,20 @@ DrawPlayerCheck:
 	addi $t3, $t3, 4
 	move $t2, $t5
 	sw $t2, 0($t3)
+	addi $t3, $t3, -8
+DrawPlayerRow5Check:
 	
 	addi $t3, $t3, WIDTH_4
-	addi $t3, $t3, -8
 
-	# row 5
+	# row 6 - only draw if the address is on the screen
+	ble $t3, DISPLAY_ADDRESS, DrawPlayerRow6Check
+	bge $t3, $t0, DrawPlayerRow6Check
+
+	move $t2, $t5
 	sw $t2, 0($t3)
 	addi $t3, $t3, 8
 	sw $t2, 0($t3)
+DrawPlayerRow6Check:
 	
 	lw $ra, 0($sp)		# pop $ra off stack
 	addi $sp, $sp, 4
@@ -1534,60 +1563,88 @@ ErasePlayer:
 	# manually draw the pixels
 
 	li $t2, COL_BG
-	# row 1
+	
+	li $t0, DISPLAY_ADDRESS
+	addi $t0, $t0, AREA_4
+
+	# row 1 - only erase if the address is on the screen
+	ble $t3, DISPLAY_ADDRESS, ErasePlayerRow1Check
+	bge $t3, $t0, ErasePlayerRow1Check
+
 	sw $t2, 0($t3)
 	addi $t3, $t3, 4
 	sw $t2, 0($t3)
 	addi $t3, $t3, 4
 	sw $t2, 0($t3)
+	addi $t3, $t3, -8
+ErasePlayerRow1Check:
 	
 	addi $t3, $t3, WIDTH_4
-	addi $t3, $t3, -8
 
-	# row 2
+	# row 2 - only erase if the address is on the screen
+	ble $t3, DISPLAY_ADDRESS, ErasePlayerRow2Check
+	bge $t3, $t0, ErasePlayerRow2Check
+
 	sw $t2, 0($t3)
 	addi $t3, $t3, 4
 	sw $t2, 0($t3)
 	addi $t3, $t3, 4
 	sw $t2, 0($t3)
+	addi $t3, $t3, -8
+ErasePlayerRow2Check:
 	
 	addi $t3, $t3, WIDTH_4
-	addi $t3, $t3, -8
 
-	# row 3
+	# row 3 - only erase if the address is on the screen
+	ble $t3, DISPLAY_ADDRESS, ErasePlayerRow3Check
+	bge $t3, $t0, ErasePlayerRow3Check
+
 	sw $t2, 0($t3)
 	addi $t3, $t3, 4
 	sw $t2, 0($t3)
 	addi $t3, $t3, 4
 	sw $t2, 0($t3)
+	addi $t3, $t3, -8
+ErasePlayerRow3Check:
 	
 	addi $t3, $t3, WIDTH_4
-	addi $t3, $t3, -8
 
-	# row 4
+	# row 4 - only erase if the address is on the screen
+	ble $t3, DISPLAY_ADDRESS, ErasePlayerRow4Check
+	bge $t3, $t0, ErasePlayerRow4Check
+
 	sw $t2, 0($t3)
 	addi $t3, $t3, 4
 	sw $t2, 0($t3)
 	addi $t3, $t3, 4
 	sw $t2, 0($t3)
+	addi $t3, $t3, -8
+ErasePlayerRow4Check:
 	
 	addi $t3, $t3, WIDTH_4
-	addi $t3, $t3, -8
 
-	# row 5
+	# row 5 - only erase if the address is on the screen
+	ble $t3, DISPLAY_ADDRESS, ErasePlayerRow5Check
+	bge $t3, $t0, ErasePlayerRow5Check
+
 	sw $t2, 0($t3)
 	addi $t3, $t3, 4
 	sw $t2, 0($t3)
 	addi $t3, $t3, 4
 	sw $t2, 0($t3)
+	addi $t3, $t3, -8
+ErasePlayerRow5Check:
 	
 	addi $t3, $t3, WIDTH_4
-	addi $t3, $t3, -8
 
-	# row 5
+	# row 6 - only erase if the address is on the screen
+	ble $t3, DISPLAY_ADDRESS, ErasePlayerRow6Check
+	bge $t3, $t0, ErasePlayerRow6Check
+
 	sw $t2, 0($t3)
 	addi $t3, $t3, 8
 	sw $t2, 0($t3)
+ErasePlayerRow6Check:
 	
 	lw $ra, 0($sp)		# pop $ra off stack
 	addi $sp, $sp, 4
@@ -1772,8 +1829,9 @@ crossresetend:
 
 loop:
 	# game over check
-	# if player is under the map, i.e. playery > HEIGHT, die
+	# if player is under the map, i.e. playery >= HEIGHT + 4, die
 	li $t0, HEIGHT
+	addi $t0, $t0, 4
 	bge $s7, $t0, GameOver
 	
 	# if player health <= 0, die
