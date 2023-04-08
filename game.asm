@@ -26,7 +26,7 @@
 # 6. Double jump [1]
 #
 # Link to video demonstration for final submission:
-# - (insert YouTube / MyMedia / other URL here). Make sure we can view it!
+# https://www.youtube.com/watch?v=moUooeaW2mA
 #
 # Are you OK with us sharing the video with people outside course staff?
 # - yes, and please share this project github link as well!
